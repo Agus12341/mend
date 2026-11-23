@@ -1,36 +1,28 @@
-[![make.fun · hidden-spec-cli-01-run-20261122](https://make.fun/badge/hidden-spec-cli-01-run-20261122.svg)](https://make.fun/bounty/hidden-spec-cli-01-run-20261122)
+# mend
+
+[![make.fun](https://make.fun/badge/hidden-spec-cli-01-run-20261122.svg)](https://make.fun/bounty/hidden-spec-cli-01-run-20261122)
 [![rank](https://make.fun/badge/hidden-spec-cli-01-run-20261122/Agus12341/mend/rank.svg)](https://make.fun/bounty/hidden-spec-cli-01-run-20261122)
 [![reward](https://make.fun/badge/hidden-spec-cli-01-run-20261122/Agus12341/mend/reward.svg)](https://make.fun/bounty/hidden-spec-cli-01-run-20261122)
 
-# mend - one patch tool for every AI edit format
+mend applies an edit written by an AI model to a tree of text files. Models write edits in four formats, and this tool reads all of them: unified diffs (with the wrong line numbers models often produce), SEARCH/REPLACE blocks, V4A patches, and JSON tool calls. It applies the whole patch at once or nothing at all: if any edit fails, no file is written.
 
-An entry for make.fun's [Build mend, one patch tool for every AI edit format](https://make.fun/bounty/hidden-spec-cli-01-run-20261122) bounty.
+## Usage
 
-`main.ts` is mend, a CLI that applies an edit an AI model wrote to a tree of text files. Models write edits in four
-formats, and mend reads all of them, exactly as `SPEC.md` in this repository says:
+    node main.ts [--format=NAME] [--check] [--strict] [PATCH]
 
-- unified diffs, including hunks whose line numbers are wrong (the hunk is placed at the occurrence nearest the
-  stated line);
-- SEARCH/REPLACE blocks;
-- V4A patches (`*** Begin Patch` ... `*** End Patch`), with anchored chunks and a cursor;
-- text-editor tool calls as JSON, one array or one object a line.
+PATCH is the patch file; without it, or with `-`, the patch is read from standard input. `--format` picks one format (`unified`, `search-replace`, `v4a`, `json`) or `auto` to detect it. `--check` reports what would change without writing anything. `--strict` matches lines exactly, with no whitespace tolerance.
 
-Old lines are matched at three tiers: exact, then ignoring trailing spaces and tabs, then ignoring leading ones
-too, with the replacement re-indented to the file at the loosest tier. `--strict` keeps only the exact tier.
-A patch applies whole or not at all: every edit is tried and every failure reported, and when any edit fails no
-file is written. `--check` reports what would change and writes nothing.
+When the patch applies cleanly, mend prints one line per changed file (`A`, `D`, `M`, or `R old -> new` for a move) and a final `ok: N files` line. When an edit fails it prints one `error: <code> <path>` line per failed edit and `failed: K of N edits`, and leaves every file untouched.
 
-Run it as `node main.ts [--format=NAME] [--check] [--strict] [PATCH]`; with no PATCH (or `-`) the patch is read
-from standard input. Node 22, standard library alone.
+## How it matches
 
-## Layout
+Line edits are found by content, not by the line numbers in the patch. A block of old lines is matched exactly first, then with trailing whitespace ignored, then with leading and trailing whitespace ignored (and re-indented to fit the file). A unified hunk with several copies of its old lines takes the copy nearest the line number the patch claims. SEARCH/REPLACE blocks need exactly one copy. V4A chunks walk the file with a cursor and an anchor line.
 
-- `main.ts` - the CLI
-- `runner.ts` - the trial runner the grader uses (kept as the kit has it)
-- `check.ts` - runs the public practice set against `main.ts`
-- `SPEC.md` - the specification mend implements
-- `LICENSE` - MIT
+## Files
 
-## License
+- `main.ts` — the CLI, Node 22 standard library only.
+- `SPEC.md` — the full specification this implements.
+- `check.ts` — runs the kit's practice checks against `main.ts`.
+- `runner.ts` — runs one check the way a trial does.
 
-MIT - see `LICENSE`.
+Built for the [mend bounty on make.fun](https://make.fun/bounty/hidden-spec-cli-01-run-20261122).
